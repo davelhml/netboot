@@ -1,18 +1,60 @@
 #! /bin/bash
 
-image=${1:-lms}
-ksurl=http://10.95.30.13:8880/pxelinux/ks-$image.cfg
-osurl=http://10.95.30.13:8880/iso
-disk=/tmp/vm/$image.qcow2
+# Network ISO source
+osurl=http://10.95.31.210/tmp/centos7
 
-set -ex
+# Image name
+name=${1:-lms}              # VM name
+disk=/opt/vm/$name.qcow2    # Disk path
+disk_size=40                # Disk size in GiB
+vcpus=4                     # Num of cpu core
+mem_size=4096               # RAM size in MiB
+ks=ks.cfg                   # Kickstart template file
 
-virsh destroy  xtemplate || /bin/true
-virsh undefine xtemplate || /bin/true
-mkdir -p /tmp/vm
+# Network configure
+net1_ip=10.95.30.202        # IP address of first nic, optional
+net1_gw=10.95.30.1          # required if net1_ip set
+net1_mask=255.255.254.0     # required if net1_ip set
+net1_ns=                    # optional
+
+net2_ip=                    # IP address of second nic, optional
+net2_gw=                    # optional
+net2_mask=255.255.255.0     # required if net2_ip set
+
+set -e
+
+virsh destroy  $name 2>/dev/null || /bin/true
+virsh undefine $name 2>/dev/null || /bin/true
 rm -f $disk
 
-#--extra-args='ks=ftp://192.168.0.43/pub/centos/ks.cfg ksdevice=ens3 ip=192.168.122.90 netmask=255.255.255.0 gateway=192.168.122.1 dns=8.8.8.8' --location=ftp://192.168.0.43/pub/centos
+# Prepare kickstart file
+cp $ks /tmp/ks.cfg
+if [ -n "$net1_ip" ]; then
+    sed -i "s/^network.*/network --device=eth0 --onboot=yes --activate --bootproto=static --ip=${net1_ip} --netmask=${net1_mask} --gateway=${net1_gw} --hostname=${name}/" /tmp/ks.cfg
+fi
+if [ -n "$net2_ip" ]; then
+    opts="network --device=eth1 --onboot=yes --bootproto=static --ip=${net2_ip} --netmask=${net2_mask}"
+    [ -n "$net2_gw" ] && opts="$opts --gateway=${net2_gw}"
+    sed -i "/^network/a${opts}" /tmp/ks.cfg
+fi
 
-virt-install --name xtemplate --ram 2048 --vcpus 2 --disk path=$disk,format=qcow2,device=disk,bus=virtio,size=40 --os-type linux --graphics vnc,listen=0.0.0.0 --network bridge=br0,model=virtio --noautoconsole --extra-args="ks=$ksurl console=tty0 console=ttyS0,115200n8" --location $osurl
-virsh vncdisplay xtemplate
+# Build VM
+set -x
+virt-install -n ${name} --ram ${mem_size} --vcpus ${vcpus} --disk path=${disk},format=qcow2,device=disk,bus=virtio,size=${disk_size} --os-type linux --graphics none --network bridge=br0,model=virtio --extra-args="ks=file:ks.cfg console=ttyS0,115200n8" -l $osurl --initrd-inject=/tmp/ks.cfg --noreboot
+
+# Start VM and check its connectivity
+set +ex
+virsh start ${name}
+while true
+do
+nc ${net1_ip} 22 <<EOF
+quit
+EOF
+[ $? -eq 0 ] && echo "connected" && break
+echo -n "." && sleep 1
+done
+
+# Copy script and exec installer
+sleep 3
+scp -o "StrictHostKeyChecking no" -p install.sh root@${net1_ip}:/tmp
+ssh -o "StrictHostKeyChecking no" root@${net1_ip} /tmp/install.sh $name
