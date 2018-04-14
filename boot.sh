@@ -1,60 +1,119 @@
 #! /bin/bash
 
-# Network ISO source
-osurl=http://10.95.31.210/tmp/centos7
+source scripts/common.sh
 
-# Image name
-name=${1:-lms}              # VM name
-disk=/opt/vm/$name.qcow2    # Disk path
-disk_size=40                # Disk size in GiB
-vcpus=4                     # Num of cpu core
-mem_size=4096               # RAM size in MiB
-ks=ks.cfg                   # Kickstart template file
+CONFIGDIR=config
 
-# Network configure
-net1_ip=10.95.30.202        # IP address of first nic, optional
-net1_gw=10.95.30.1          # required if net1_ip set
-net1_mask=255.255.254.0     # required if net1_ip set
-net1_ns=                    # optional
-
-net2_ip=                    # IP address of second nic, optional
-net2_gw=                    # optional
-net2_mask=255.255.255.0     # required if net2_ip set
-
-set -e
-
-virsh destroy  $name 2>/dev/null || /bin/true
-virsh undefine $name 2>/dev/null || /bin/true
-rm -f $disk
-
-# Prepare kickstart file
-cp $ks /tmp/ks.cfg
-if [ -n "$net1_ip" ]; then
-    sed -i "s/^network.*/network --device=eth0 --onboot=yes --activate --bootproto=static --ip=${net1_ip} --netmask=${net1_mask} --gateway=${net1_gw} --hostname=${name}/" /tmp/ks.cfg
-fi
-if [ -n "$net2_ip" ]; then
-    opts="network --device=eth1 --onboot=yes --bootproto=static --ip=${net2_ip} --netmask=${net2_mask}"
-    [ -n "$net2_gw" ] && opts="$opts --gateway=${net2_gw}"
-    sed -i "/^network/a${opts}" /tmp/ks.cfg
-fi
-
-# Build VM
-set -x
-virt-install -n ${name} --ram ${mem_size} --vcpus ${vcpus} --disk path=${disk},format=qcow2,device=disk,bus=virtio,size=${disk_size} --os-type linux --graphics none --network bridge=br0,model=virtio --extra-args="ks=file:ks.cfg console=ttyS0,115200n8" -l $osurl --initrd-inject=/tmp/ks.cfg --noreboot
-
-# Start VM and check its connectivity
-set +ex
-virsh start ${name}
-while true
-do
-nc ${net1_ip} 22 <<EOF
-quit
+function usage() {
+cat >&2 <<EOF
+Usage:
+       $0 - automatic deploy tool for openstack
+       $0 [ -h ] type
+Options
+       type
+          Node type, controller, compute, network ...
+Examples:
+       $0 controller
 EOF
-[ $? -eq 0 ] && echo "connected" && break
-echo -n "." && sleep 1
+exit 0
+}
+
+if ! my__options=$(getopt -u -o vh -l cfgdir:, -- "$@")
+then
+    exit 1
+fi
+set -- $my__options
+while [ $# -gt 0 ]
+do
+    case $1 in
+	-h)
+	    usage;;
+        (--) shift; break;;
+        (*) usage;;
+    esac
 done
 
-# Copy script and exec installer
-sleep 3
-scp -o "StrictHostKeyChecking no" -p install.sh root@${net1_ip}:/tmp
-ssh -o "StrictHostKeyChecking no" root@${net1_ip} /tmp/install.sh $name
+[ -z "$1" ] && echo "Please specify image type" && exit 1
+
+echo "Deploy \"$1\" with config directory \"$CONFIGDIR\""
+
+# Image name
+name=${1}                   # VM name
+ini=$CONFIGDIR/$name.ini    # Image config file
+ks=$CONFIGDIR/ks.cfg        # Kickstart template file
+
+set -e
+echo "Reading configuration from 'config'"
+#
+osurl=$(__readINI $CONFIGDIR/common.ini common os)        # Network ISO source location
+basedir=$(__readINI $CONFIGDIR/common.ini common basedir) # Disk base path
+[ -z "$basedir" ] && die "Please specific image basedir"
+
+#
+image_name=$(__readINI $ini base name)            # Image Name
+vcpus=$(__readINI $ini base vcpus)                # Num of cpu core
+mem_size=$(__readINI $ini base ram)               # RAM size in MiB
+disk_size=$(__readINI $ini base disk)             # Disk size in GiB
+temp_gw=$(__readINI $ini base temp_gw)            # Gateway on boot
+
+disk_path=${basedir}/${image_name}.qcow2          # Disk path
+disk_opts="--disk path=${disk_path},format=qcow2,device=disk,bus=virtio,size=${disk_size}"
+extra_opts="ks=file:ks.cfg console=ttyS0,115200n8"
+
+# Prepare kickstart file
+rm -f /tmp/ks.cfg
+/bin/cp -f $ks /tmp/ks.cfg
+
+# Network configure
+for i in {0..2}; do
+    iface="eth$i"
+    ip=$(__readINI   $ini $iface ip)
+    [ -z "$ip" ] && break
+
+    mask=$(__readINI $ini $iface mask)
+    gw=$(__readINI   $ini $iface gateway)
+    br=$(__readINI   $ini $iface bridge)
+    ovs=$(__readINI  $ini $iface ovs)
+    vlan=$(__readINI $ini $iface vlan)
+
+    echo "Read $iface $ip/$mask/$gw/$br/$ovs/$vlan"
+
+    opts="network --device=$iface --onboot=yes --bootproto=static --ip=${ip} --netmask=${mask}"
+    [ -n "$gw" ] && opts="$opts --gateway=${gw}"
+
+    network_opts="--network bridge=${br},model=virtio"
+    [ "${ovs}x" == "yesx" ] && network_opts="${network_opts},virtualport_type=openvswitch"
+
+    if [ $i -eq 0 ]; then
+        sed -i "s/^network.*/$opts/" /tmp/ks.cfg
+        bootgw=${gw:-$temp_gw}
+        extra_opts="ks=file:ks.cfg console=ttyS0,115200n8 ip=${ip}::${bootgw}:${mask}:${name}:eth0:none"
+    else
+        sed -i "/^network/a${opts}" /tmp/ks.cfg
+    fi
+done
+sed -i "1inetwork --hostname=${name}" /tmp/ks.cfg
+set +e
+echo "Use ${bootgw} as boot gateway: ${extra_opts}"
+echo "VM disk options:    ${disk_opts}"
+echo "VM network options: ${network_opts}"
+
+virsh dominfo ${image_name} 2>/dev/null
+if [ $? -eq 0 ]; then
+    echo "VM already exits, delete it or revert snapshot for re-deploy"
+    echo "  ./delete.sh $image_name"
+    echo "  ./boot-ex.sh $name $image_name [vlan]"
+    exit 0
+fi
+
+
+set -ex
+virt-install -n ${image_name} -r ${mem_size} --vcpus ${vcpus} ${disk_opts} ${network_opts} --os-type linux --graphics none -l $osurl --noreboot --initrd-inject=/tmp/ks.cfg --extra-args "${extra_opts}"
+set +ex
+echo -n "Take snapshot for ${image_name} and restart"
+for i in {0..2}; do
+    echo -n "." && sleep 1
+done
+echo
+virsh snapshot-create-as ${image_name} --name init
+virsh start ${image_name}
