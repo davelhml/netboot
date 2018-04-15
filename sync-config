@@ -1,0 +1,4 @@
+#! /bin/bash
+
+source devstack.rc
+rsync -av --delete config $HOME_PATH

@@ -1,6 +1,6 @@
 #! /bin/bash -e
 
-source devstack.env
+source devstack.rc
 
 # Mount iso files
 mkdir -p $HOME_PATH/centos7
@@ -8,7 +8,7 @@ umount $HOME_PATH/centos7 || /bin/true
 mount -o loop,rw -t iso9660 $OS_IMG $HOME_PATH/centos7
 
 # Copy config files
-rsync -av --delete config $HOME_PATH
+./sync-config
 
 # Start HTTP server
 if which nginx; then
@@ -29,5 +29,13 @@ start_simple_http_server() {
     echo
 }
 
+echo
 
-echo "Run ./boot.sh <name>"
+cat >&1 <<EOF
+Now config and http server are deployed, you can run "./boot.sh <name>" to init vm or
+something else.
+
+Example:
+source devstack.env
+
+EOF

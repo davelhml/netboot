@@ -65,6 +65,7 @@ rm -f /tmp/ks.cfg
 /bin/cp -f $ks /tmp/ks.cfg
 
 # Network configure
+network_opts=
 for i in {0..2}; do
     iface="eth$i"
     ip=$(__readINI   $ini $iface ip)
@@ -81,7 +82,7 @@ for i in {0..2}; do
     opts="network --device=$iface --onboot=yes --bootproto=static --ip=${ip} --netmask=${mask}"
     [ -n "$gw" ] && opts="$opts --gateway=${gw}"
 
-    network_opts="--network bridge=${br},model=virtio"
+    network_opts="${network_opts} --network bridge=${br},model=virtio"
     [ "${ovs}x" == "yesx" ] && network_opts="${network_opts},virtualport_type=openvswitch"
 
     if [ $i -eq 0 ]; then

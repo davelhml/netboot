@@ -1,0 +1,20 @@
+- hosts: all
+  remote_user: root
+  tasks:
+    - name: upgrade all packages, excluding kernel
+      yum:
+        name: '*'
+        state: latest
+        exclude: kernel*
+    - name: Install OpenStack packages
+      yum:
+        name: centos-release-openstack-queens
+        state: latest
+      notify:
+        - upgrade
+  handlers:
+  - name: upgrade
+    yum:
+      name: '*'
+      state: latest
+      exclude: kernel*
