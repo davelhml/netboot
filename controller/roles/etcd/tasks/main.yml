@@ -1,0 +1,16 @@
+---
+- name: Install Etcd
+  package: name=etcd state=present
+  register: etcd_install
+
+- name: Copy etcd configuration.
+  template:
+    src: etcd.conf.j2
+    dest: /etc/etcd/etcd.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart etcd
+
+- name: Ensure etcd is started and set to run on startup.
+  service: name=etcd state=started enabled=yes

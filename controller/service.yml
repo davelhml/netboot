@@ -2,5 +2,7 @@
 - hosts: controller
   remote_user: root
   roles:
-    - mariadb
-    - rabbitmq
+#    - mariadb
+#    - rabbitmq
+#    - memcached
+    - etcd
