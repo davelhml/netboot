@@ -1,0 +1,15 @@
+---
+- name: add openstack user
+  rabbitmq_user:
+    user: openstack
+    password: cc
+    vhost: /
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
+    state: present
+
+- name: delete guest user
+  rabbitmq_user:
+    user: guest
+    state: absent
