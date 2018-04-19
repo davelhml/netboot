@@ -1,0 +1,34 @@
+- hosts: all
+  remote_user: root
+  tasks:
+    - name: upgrade all packages, excluding kernel
+      yum:
+        name: '*'
+        state: latest
+        exclude: kernel*
+    - name: Install epel-release
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - epel-release
+
+    - name: Install centos-release-openstack-queens
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - centos-release-openstack-queens
+
+    - name: Install dependencies
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - python-pip
+        - python-openstackclient
+        - openstack-keystone
+        - httpd
+        - mod_wsgi
+        - nginx
+      notify: yum update

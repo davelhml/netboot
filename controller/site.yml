@@ -1,3 +1,4 @@
 ---
-#- import_playbook: update.yml
+- import_playbook: packages.yml
 - import_playbook: service.yml
+- import_playbook: keystone.yml
