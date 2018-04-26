@@ -1,0 +1,38 @@
+keystone_auth_admin_password: cc
+
+## Role info
+keystone_role_name: admin
+keystone_default_role_name: _member_
+
+## Admin info
+keystone_admin_port: 35357
+keystone_admin_user_name: admin
+keystone_admin_tenant_name: admin
+keystone_admin_description: Admin Tenant
+
+## Service Type and Data
+keystone_service_setup: true
+keystone_service_region: RegionOne
+keystone_service_name: keystone
+keystone_service_port: 5000
+keystone_service_type: identity
+keystone_service_description: "Keystone Identity Service"
+keystone_service_user_name: keystone
+keystone_service_tenant_name: service
+
+
+keystone_services:
+  keystone-wsgi-public:
+    service_name: "keystone-wsgi-public"
+    execstarts: "uwsgi --ini /etc/uwsgi/keystone-wsgi-public.ini"
+  keystone-wsgi-admin:
+    service_name: "keystone-wsgi-admin"
+    execstarts: "uwsgi --ini /etc/uwsgi/keystone-wsgi-admin.ini"
+
+keystone_uwsgi_ports:
+    keystone-wsgi-public:
+      http: 37358
+      socket: 35358
+    keystone-wsgi-admin:
+      http: 37359
+      socket: 5001

@@ -1,0 +1,81 @@
+---
+- name: Check current state of Keystone DB
+  command: "keystone-manage db_sync --check"
+  become: yes
+  become_user: keystone
+  register: keystone_db_sync_check
+  failed_when: "keystone_db_sync_check.rc == 1"
+  changed_when: "keystone_db_sync_check.rc not in [2, 3, 4]"
+  run_once: yes
+
+- name: Set the db sync local facts
+  ini_file:
+    dest: "/etc/ansible/facts.d/openstack_ansible.fact"
+    section: keystone
+    option: "{{ item.name }}"
+    value: "{{ item.state }}"
+  with_items:
+    - name: "need_db_expand"
+      state: "{{ (keystone_db_sync_check.rc | int == 2) | bool }}"
+    - name: "need_db_migrate"
+      state: "{{ (keystone_db_sync_check.rc | int in [2, 3] ) | bool }}"
+    - name: "need_db_contract"
+      state: "{{ (keystone_db_sync_check.rc | int in [2, 3, 4]) | bool }}"
+
+- name: Refresh local facts
+  setup:
+    filter: ansible_local
+    gather_subset: "!all"
+  tags:
+    - keystone-config
+
+# When keystone is initially built, the service does not yet exist on the
+# host this task is executed on. Detect the presence of the services.
+- name: Test if keystone service exists
+  service:
+    name: "{{ item }}"
+  check_mode: yes
+  register: keystone_service_exists
+  with_items: "{{ keystone_services.keys() | list }}"
+
+- name: Ensure keystone service is stopped
+  service:
+    name: "{{ item.name }}"
+    state: stopped
+  register: _stop
+  until: _stop | success
+  retries: 5
+  delay: 2
+  with_items: "{{ keystone_service_exists.results }}"
+  when:
+    - "(ansible_local['openstack_ansible']['keystone']['need_db_expand'] | bool) or
+       (ansible_local['openstack_ansible']['keystone']['need_db_migrate'] | bool)"
+    - "(item.status['LoadState'] == 'loaded' | bool)"
+  notify:
+    - Manage LB
+    - Restart uWSGI
+
+- name: Perform a Keystone DB sync expand
+  command: "keystone-manage db_sync --expand"
+  become: yes
+  become_user: "keystone"
+  when:
+    - "ansible_local['openstack_ansible']['keystone']['need_db_expand'] | bool"
+  run_once: yes
+
+- name: Perform a Keystone DB sync migrate
+  command: "keystone-manage db_sync --migrate"
+  become: yes
+  become_user: "keystone"
+  when:
+    - "ansible_local['openstack_ansible']['keystone']['need_db_migrate'] | bool"
+  run_once: yes
+
+- name: Perform a Keystone DB sync contract
+  command: "keystone-manage db_sync --contract"
+  become: yes
+  become_user: "keystone"
+  when:
+    - "(keystone_all_software_updated | default('no')) | bool"
+    - "ansible_local['openstack_ansible']['keystone']['need_db_contract'] | bool"
+  run_once: yes

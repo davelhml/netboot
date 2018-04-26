@@ -1,0 +1,34 @@
+- name: Installation and setup of Keystone
+  hosts: controller
+  user: root
+  pre_tasks:
+    - name: Create DB for service
+      mysql_db:
+        name: keystone
+        state: "present"
+    - name: Grant access to the DB for the service
+      mysql_user:
+        name: keystone
+        password: cc
+        host: "{{ item }}"
+        state: "present"
+        priv: "keystone.*:ALL"
+      with_items:
+        - "localhost"
+        - "%"
+
+    - name: Copy keystone configuration files
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - src: "templates/keystone.conf.j2"
+          dest: "/etc/keystone/keystone.conf"
+
+  tasks:
+    - include_tasks: keystone_db_setup.yml
+    - include_tasks: keystone_fernet_keys_create.yml
+    - include_tasks: keystone_service_setup.yml
+
+  vars_files:
+    - keystone_vars.yml

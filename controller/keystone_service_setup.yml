@@ -1,0 +1,33 @@
+- name: Wait for services to be up
+  uri:
+    url: "{{ item }}"
+    method: "HEAD"
+    status_code: 300
+  with_items:
+    - "http://controller:{{ keystone_uwsgi_ports['keystone-wsgi-admin']['http'] }}"
+    - "http://controller:{{ keystone_uwsgi_ports['keystone-wsgi-public']['http'] }}"
+  register: _wait_check
+  until: _wait_check | success
+  retries: 12
+  delay: 5
+
+- name: Bootstrap keystone admin and endpoint
+  command: |
+    keystone-manage bootstrap --bootstrap-username admin \
+     --bootstrap-password cc \
+     --bootstrap-project-name admin \
+     --bootstrap-role-name admin \
+     --bootstrap-service-name keystone \
+     --bootstrap-region-id {{ keystone_service_region }} \
+     --bootstrap-admin-url http://controller:35357/v3/ \
+     --bootstrap-public-url  http://controller:5000/v3/ \
+     --bootstrap-internal-url http://controller:5000/v3/
+  changed_when: false
+  register: add_service
+  until: add_service|success
+  retries: 5
+  delay: 10
+
+- name: Create example domain
+  shell:
+    source /root/adminrc && openstack domain create --description "An Example Domain" example
