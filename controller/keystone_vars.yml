@@ -28,11 +28,3 @@ keystone_services:
   keystone-wsgi-admin:
     service_name: "keystone-wsgi-admin"
     execstarts: "uwsgi --ini /etc/uwsgi/keystone-wsgi-admin.ini"
-
-keystone_uwsgi_ports:
-    keystone-wsgi-public:
-      http: 37358
-      socket: 35358
-    keystone-wsgi-admin:
-      http: 37359
-      socket: 5001

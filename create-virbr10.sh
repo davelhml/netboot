@@ -10,29 +10,11 @@ ip link show virbr10-dummy
 brctl addbr virbr10
 brctl stp virbr10 on
 brctl addif virbr10 virbr10-dummy
-ip address add 192.168.100.1/24 dev virbr10 broadcast 192.168.100.255 up
+ip address add 192.168.100.1/24 dev virbr10 broadcast 192.168.100.255
+ifconfig virbr10 up
 
 ## nat ##
-iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -d 224.0.0.0/24 -j RETURN
-iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -d 255.255.255.255/32 -j RETURN
-# Masquerade all packets going from VMs to the LAN/Internet.
-iptables -t nat -A POSTROUTING -s 192.168.100.0/24 ! -d 192.168.100.0/24 -p tcp -j MASQUERADE --to-ports 1024-65535
-iptables -t nat -A POSTROUTING -s 192.168.100.0/24 ! -d 192.168.100.0/24 -p udp -j MASQUERADE --to-ports 1024-65535
 iptables -t nat -A POSTROUTING -s 192.168.100.0/24 ! -d 192.168.100.0/24 -j MASQUERADE
-## filter ##
-iptables -A FORWARD -d 192.168.100.0/24 -o virbr10 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-# Allow outbound traffic from the private subnet.
-iptables -A FORWARD -s 192.168.100.0/24 -i virbr10 -j ACCEPT
-# Allow traffic between virtual machines.
-iptables -A FORWARD -i virbr10 -o virbr10 -j ACCEPT
-# Reject everything else.
-iptables -A FORWARD -i virbr10 -j REJECT --reject-with icmp-port-unreachable
-iptables -A FORWARD -o virbr10 -j REJECT --reject-with icmp-port-unreachable
-# Accept DNS (port 53) and DHCP (port 67) packets from VMs.
-iptables -A INPUT -i virbr10 -p udp -m udp -m multiport --dports 53,67 -j ACCEPT
-iptables -A INPUT -i virbr10 -p tcp -m tcp -m multiport --dports 53,67 -j ACCEPT
-## mangle ##
-iptables -t mangle -A POSTROUTING -o virbr10 -p udp -m udp --dport 68 -j CHECKSUM --checksum-fill
 
 ## DNSMASQ
 mkdir -p /var/lib/dnsmasq/virbr10

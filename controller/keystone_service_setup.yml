@@ -4,11 +4,11 @@
     method: "HEAD"
     status_code: 300
   with_items:
-    - "http://controller:{{ keystone_uwsgi_ports['keystone-wsgi-admin']['http'] }}"
-    - "http://controller:{{ keystone_uwsgi_ports['keystone-wsgi-public']['http'] }}"
-  register: _wait_check
-  until: _wait_check | success
-  retries: 12
+    - "http://controller:5000"
+    - "http://controller:35357"
+  register: r
+  until: r is success
+  retries: 3
   delay: 5
 
 - name: Bootstrap keystone admin and endpoint
@@ -25,9 +25,26 @@
   changed_when: false
   register: add_service
   until: add_service|success
-  retries: 5
-  delay: 10
+  retries: 3
+  delay: 5
+  when: "not (ansible_local['openstack_ansible']['keystone'].get('local_service_up', False)|bool)"
 
-- name: Create example domain
-  shell:
-    source /root/adminrc && openstack domain create --description "An Example Domain" example
+- name: Set keystone local facts
+  ini_file:
+    dest: "/etc/ansible/facts.d/openstack_ansible.fact"
+    section: keystone
+    option: "{{ item.name }}"
+    value: "{{ item.state }}"
+  with_items:
+    - name: "local_service_up"
+      state: "{{ (add_service.rc | int == 0) | bool }}"
+  when: "not (ansible_local['openstack_ansible']['keystone'].get('local_service_up', None))"
+
+- name: Create a domain, projects, users and roles
+  script: scripts/keystone-init.sh
+
+- name: Verifying
+  command: "{{ item }}"
+  with_items:
+    - openstack --os-identity-api-version 3 --os-auth-url http://controller:35357/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name admin --os-username admin --os-password cc token issue
+    - openstack --os-identity-api-version 3 --os-auth-url http://controller:5000/v3 --os-project-domain-name Default --os-user-domain-name Default --os-project-name demo --os-username demo --os-password cc token issue

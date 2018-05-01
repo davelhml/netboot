@@ -27,8 +27,7 @@
       with_items:
         - python-pip
         - python-openstackclient
-        - openstack-keystone
         - httpd
         - mod_wsgi
         - nginx
-      notify: yum update
+        #notify: yum update

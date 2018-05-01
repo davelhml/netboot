@@ -6,3 +6,13 @@
     - mariadb
     - rabbitmq
     - memcached
+  tasks:
+    - name: Install Controller packages
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - httpd
+        - mod_wsgi
+        - openstack-keystone
+        - openstack-glance

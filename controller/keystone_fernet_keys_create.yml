@@ -28,17 +28,6 @@
     keystone-manage fernet_rotate --keystone-user keystone --keystone-group keystone
   when: _fernet_keys.stat.exists
 
-- name: Config httpd
-  template:
-    src: httpd.conf.j2
-    dest: /etc/httpd/conf/httpd.conf
-
-- name: Config adminrc
-  template:
-    src: adminrc.j2
-    dest: /root/adminrc
-    mode: 644
-
 - name: Link wsgi-keystone.conf
   file:
     src: /usr/share/keystone/wsgi-keystone.conf
@@ -46,6 +35,4 @@
     state: link
 
 - name: Start service httpd, if not running
-  service:
-    name: httpd
-    state: started
+  service: name=httpd state=restarted enabled=yes

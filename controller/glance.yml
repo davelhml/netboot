@@ -1,0 +1,41 @@
+- name: Install glance server
+  hosts: controller
+  user: root
+  pre_tasks:
+    - name: Create DB for glance service
+      mysql_db:
+        name: glance
+    - name: Grant access to the DB for the glance service
+      mysql_user:
+        name: glance
+        password: cc
+        host: "{{ item }}"
+        state: "present"
+        priv: "glance.*:ALL"
+      with_items:
+        - "localhost"
+        - "%"
+  tasks:
+    - name: Run init scripts
+      script: scripts/glance-init.sh
+    - name: Copy keystone configuration files
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - src: "templates/glance-api.conf.j2"
+          dest: "/etc/glance/glance-api.conf"
+        - src: "templates/glance-registry.conf.j2"
+          dest: "/etc/glance/glance-registry.conf"
+
+    - name: Perform a Glance DB sync
+      command: "glance-manage db_sync"
+      become: yes
+      become_user: glance
+      changed_when: false
+
+    - name: Start service httpd, if not running
+      service: name="{{ item }}" state=restarted enabled=yes
+      with_items:
+        - openstack-glance-api
+        - openstack-glance-registry
