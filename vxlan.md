@@ -15,3 +15,5 @@ Reference
 ---------
 
 1. http://www.definethecloud.net/vxlan-deep-dive/
+2. https://events.static.linuxfound.org/sites/events/files/slides/2013-linuxcon.pdf
+3. http://blog.arunsriraman.com/2017/02/how-to-setting-up-gre-or-vxlan-tunnel.html
