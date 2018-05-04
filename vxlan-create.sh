@@ -28,6 +28,7 @@ bridge_up() {
     # Create Vxlan Bridge
     brctl addbr br-vxlan
     brctl addif br-vxlan vxlan0
+    brctl stp br-vxlan on
     ip address add ${vxlan_ip} dev br-vxlan  # not necessary
     ip link set up dev br-vxlan
 }
