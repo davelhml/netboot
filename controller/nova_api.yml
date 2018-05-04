@@ -1,32 +1,26 @@
 - name: Install Nova Api
   hosts: controller
   user: root
-  pre_tasks:
-    - name: Create DB for glance service
-      mysql_db:
-        name: "{{ item }}"
-      with_items:
-        - nova_api
-        - nova
-        - nova_cell0
-
-    - name: Grant access to the DB for the Nova service
-      mysql_user:
-        name: nova
-        password: cc
-        host: "{{ item[0] }}"
-        state: "present"
-        priv: "{{ item[1] }}.*:ALL"
-      loop: "{{ query('nested', [ '%', 'localhost' ], [ 'nova_api', 'nova', 'nova_cell0' ]) }}"
-
   tasks:
+    - name: Run nova init DB scripts
+      script: scripts/nova-init-db.sh
+      register: db_created
+
+    - name: Set the Nova local facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/openstack.fact"
+        section: nova
+        option: "db_created"
+        value: "yes"
+      when: db_created.rc == 0
+
     - name: Check nova user
       shell: "source /root/adminrc && openstack user show nova"
       register: nova_user_check
 
     - name: Run nova init scripts
       script: scripts/nova-init.sh
-      when: "{{ (nova_user_check.rc | int != 0) }}"
+      when: nova_user_check.rc != 0
 
     - name: Install nova packages
       yum:
@@ -41,15 +35,20 @@
     - name: Restart HTTP server
       service: name=httpd state=restarted enabled=yes
 
-    - name: Perform a Glance DB sync
+    - name: Check Nova cells
+      command: "nova-manage cell_v2 list_cells"
+      register: check_cell_result
+
+    - name: Perform a Nova DB sync
       command: "{{ item }}"
       become: yes
       become_user: nova
       with_items:
-        - "nova-manage api_db sync"
-        - "nova-manage cell_v2 map_cell0"
-        - "nova-manage cell_v2 create_cell --name=cell1 --verbose"
-        - "nova-manage db sync"
+        - nova-manage api_db sync
+        - nova-manage cell_v2 map_cell0
+        - nova-manage cell_v2 create_cell --name=cell1 --verbose
+        - nova-manage db sync
+      when: not check_cell_result.stdout.find('cell1')
 
     - name: Start Nova service
       service: name="{{ item }}" state=restarted enabled=yes

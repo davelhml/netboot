@@ -3,3 +3,4 @@
 - import_playbook: service.yml
 - import_playbook: keystone.yml
 - import_playbook: glance.yml
+- import_playbook: nova.yml
