@@ -27,10 +27,22 @@ ip link set up virbr10
 # SNAT
 iptables -t nat -A POSTROUTING -s 192.168.100.0/24 ! -d 192.168.100.0/24 -j MASQUERADE
 
+# DNAT
+#iptables -t nat -A PREROUTING -d 10.95.30.13/32 -p tcp -m tcp --syn -m multiport --dports 80,6080,5000,35357 -j DNAT --to-destination 192.168.100.10
+
 # DNSMASQ
 mkdir -p /var/lib/dnsmasq/virbr10
 touch /var/lib/dnsmasq/virbr10/hostsfile
 touch /var/lib/dnsmasq/virbr10/leases
 cat > /var/lib/dnsmasq/virbr10/dnsmasq.conf <<EOF
+except-interface=lo
+interface=virbr10
+bind-dynamic
+dhcp-range=192.168.100.2,192.168.100.254
+dhcp-lease-max=1000
+dhcp-leasefile=/var/lib/dnsmasq/virbr10/leases
+dhcp-hostsfile=/var/lib/dnsmasq/virbr10/hostsfile
+dhcp-no-override
+strict-order
 EOF
 dnsmasq --conf-file=/var/lib/dnsmasq/virbr10/dnsmasq.conf --pid-file=/var/run/dnsmasq-virbr10.pid

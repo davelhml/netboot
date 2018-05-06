@@ -27,7 +27,7 @@
   until: add_service|success
   retries: 3
   delay: 5
-  when: "not (ansible_local['openstack']['keystone'].get('local_service_up', False)|bool)"
+  when: not ansible_local['openstack']['keystone'].get('service_up')
 
 - name: Set keystone local facts
   ini_file:
@@ -36,12 +36,31 @@
     option: "{{ item.name }}"
     value: "{{ item.state }}"
   with_items:
-    - name: "local_service_up"
-      state: "{{ (add_service.rc | int == 0) | bool }}"
-  when: "not (ansible_local['openstack']['keystone'].get('local_service_up', None))"
+    - name: "service_up"
+      state: add_service.rc
+  when: not ansible_local['openstack']['keystone'].get('service_up')
+
+
+- name: Set keystone local facts
+  ini_file:
+    dest: "/etc/ansible/facts.d/openstack.fact"
+    section: keystone
+    option: demo
+    value: "{{ item.state }}"
+  with_items:
+    - name: "service_up"
+      state: add_service.rc
+  when: not ansible_local['openstack']['keystone'].get('service_up')
+
+
+- name: Check user role exists
+  shell: source /root/adminrc && openstack role show user -f value -c id
+  register: check_user_role
+  failed_when: check_user_role.rc not in [0, 1]
 
 - name: Create a domain, projects, users and roles
   script: scripts/keystone-init.sh
+  when: check_user_role.rc == 1
 
 - name: Verifying
   command: "{{ item }}"

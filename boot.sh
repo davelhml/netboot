@@ -4,32 +4,19 @@ source scripts/common.sh
 TEMPDIR=$(mktemp -d /tmp/netboot-XXXX)
 CONFIGDIR=config
 
-function usage() {
-cat >&2 <<EOF
-Usage:
-       $0 - automatic deploy tool for openstack
-       $0 [ -h ] type
-Options
-       type
-          Node type, controller, compute, network ...
-Examples:
-       $0 controller
-EOF
-exit 0
-}
-
-if ! my__options=$(getopt -u -o vh -l cfgdir:, -- "$@")
+if ! options=$(getopt -u -o c -l cfgdir:, -- "$@")
 then
     exit 1
 fi
-set -- $my__options
-while [ $# -gt 0 ]
-do
+set -- $options
+while [ $# -gt 0 ]; do
     case $1 in
-	-h)
-	    usage;;
+        -c|--cfgdir)
+            CONFIGDIR=$2
+            shift 2
+            ;;
         (--) shift; break;;
-        (*) usage;;
+        (*) exit;;
     esac
 done
 
@@ -37,8 +24,8 @@ done
 
 cat >&1 <<EOF
 Deploy "$1":
-  CONFIGDIR - $CONFIGDIR
-  TEMPDIR   - $TEMPDIR
+  Config directory - $CONFIGDIR
+  TEMP directory   - $TEMPDIR
 EOF
 # Image name
 name=${1}                   # VM name
@@ -46,12 +33,10 @@ ini=$CONFIGDIR/$name.ini    # Image config file
 ks=$CONFIGDIR/ks.cfg        # Kickstart template file
 
 set -e
-echo "Reading configuration from 'config'"
 #
 osurl=$(__readINI $CONFIGDIR/common.ini common os)        # Network ISO source location
 basedir=$(__readINI $CONFIGDIR/common.ini common basedir) # Disk base path
 [ -z "$basedir" ] && die "Please specific image basedir"
-
 #
 image_name=$(__readINI $ini base name)            # Image Name
 vcpus=$(__readINI $ini base vcpus)                # Num of cpu core
@@ -114,7 +99,6 @@ if [ $? -eq 0 ]; then
     echo "  ./boot-ex.sh $name $image_name [vlan]"
     exit 0
 fi
-
 
 set -ex
 virt-install -n ${image_name} -r ${mem_size} --vcpus ${vcpus} ${disk_opts} ${network_opts} --os-type linux --graphics none -l $osurl --noreboot --initrd-inject=$tmpks --extra-args "${extra_opts}"

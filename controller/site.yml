@@ -4,3 +4,4 @@
 - import_playbook: glance.yml
 - import_playbook: nova.yml
 - import_playbook: neutron.yml
+- import_playbook: dashboard.yml

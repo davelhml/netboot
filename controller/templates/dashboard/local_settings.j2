@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import os
-
 from django.utils.translation import ugettext_lazy as _
-
-
 from openstack_dashboard.settings import HORIZON_CONFIG
 
-DEBUG = False
+DEBUG = True
 
 # This setting controls whether or not compression is enabled. Disabling
 # compression makes Horizon considerably slower, but makes it much easier
@@ -23,8 +20,7 @@ COMPRESS_OFFLINE = True
 
 # WEBROOT is the location relative to Webserver root
 # should end with a slash.
-WEBROOT = '/'
-#WEBROOT = '/dashboard/'
+WEBROOT = '/dashboard/'
 
 #LOGIN_URL = WEBROOT + 'auth/login/'
 #LOGOUT_URL = WEBROOT + 'auth/logout/'

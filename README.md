@@ -26,12 +26,24 @@ eth2: overlay interface
     source devstack.rc
     ansible-playbook common/packages.yml
 
-## Controller
+### Controller
 
     source devstack.rc
     cd controller
     ansible-playbook site.yml
 
+### Compute
+
+    source devstack.rc
+    cd compute
+    ansible-playbook site.yml
+
+
+### Network
+
+    source devstack.rc
+    cd network
+    ansible-playbook site.yml
 
 
 [1](https://docs.openstack.org/install-guide)

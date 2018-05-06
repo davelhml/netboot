@@ -16,26 +16,37 @@
         - "localhost"
         - "%"
   tasks:
+
+    - name: Check glance user exists
+      shell: source /root/adminrc && openstack user show -f json glance
+      register: check_glance_user
+      failed_when: check_glance_user.rc not in [0, 1]
+
     - name: Run init scripts
       script: scripts/glance-init.sh
-    - name: Copy keystone configuration files
+      when: check_glance_user.rc == 0
+
+    - name: Config glance
       template:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
       with_items:
-        - src: "glance-api.conf.j2"
-          dest: "/etc/glance/glance-api.conf"
-        - src: "glance-registry.conf.j2"
-          dest: "/etc/glance/glance-registry.conf"
+        - src: glance/glance-api.conf.j2
+          dest: /etc/glance/glance-api.conf
+        - src: glance/glance-registry.conf.j2
+          dest: /etc/glance/glance-registry.conf
+      register: config_result
 
     - name: Perform a Glance DB sync
       command: "glance-manage db_sync"
       become: yes
       become_user: glance
       changed_when: false
+      when: config_result.changed
 
     - name: Start service httpd, if not running
       service: name="{{ item }}" state=restarted enabled=yes
       with_items:
         - openstack-glance-api
         - openstack-glance-registry
+      when: config_result.changed
