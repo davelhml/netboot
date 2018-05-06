@@ -10,7 +10,7 @@
 
 - name: Set the db sync local facts
   ini_file:
-    dest: "/etc/ansible/facts.d/openstack_ansible.fact"
+    dest: "/etc/ansible/facts.d/openstack.fact"
     section: keystone
     option: "{{ item.name }}"
     value: "{{ item.state }}"
@@ -48,8 +48,8 @@
   delay: 2
   with_items: "{{ keystone_service_exists.results }}"
   when:
-    - "(ansible_local['openstack_ansible']['keystone']['need_db_expand'] | bool) or
-       (ansible_local['openstack_ansible']['keystone']['need_db_migrate'] | bool)"
+    - "(ansible_local['openstack']['keystone']['need_db_expand'] | bool) or
+       (ansible_local['openstack']['keystone']['need_db_migrate'] | bool)"
     - "(item.status['LoadState'] == 'loaded' | bool)"
   notify:
     - Manage LB
@@ -60,7 +60,7 @@
   become: yes
   become_user: "keystone"
   when:
-    - "ansible_local['openstack_ansible']['keystone']['need_db_expand'] | bool"
+    - "ansible_local['openstack']['keystone']['need_db_expand'] | bool"
   run_once: yes
 
 - name: Perform a Keystone DB sync migrate
@@ -68,7 +68,7 @@
   become: yes
   become_user: "keystone"
   when:
-    - "ansible_local['openstack_ansible']['keystone']['need_db_migrate'] | bool"
+    - "ansible_local['openstack']['keystone']['need_db_migrate'] | bool"
   run_once: yes
 
 - name: Perform a Keystone DB sync contract
@@ -77,5 +77,5 @@
   become_user: "keystone"
   when:
     - "(keystone_all_software_updated | default('no')) | bool"
-    - "ansible_local['openstack_ansible']['keystone']['need_db_contract'] | bool"
+    - "ansible_local['openstack']['keystone']['need_db_contract'] | bool"
   run_once: yes

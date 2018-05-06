@@ -2,21 +2,21 @@
 
 source devstack.rc
 
-# Mount iso files
-mkdir -p $HOME_PATH/centos7
-umount $HOME_PATH/centos7 || /bin/true
-mount -o loop,rw -t iso9660 $OS_IMG $HOME_PATH/centos7
+echo "Mount iso file"
+mkdir -p $OS_PATH $TEMP_PATH
+umount $OS_PATH || /bin/true
+mount -o loop,rw -t iso9660 $OS_IMG $OS_PATH
 
-# Copy config files
-./sync-config
-
-# Start HTTP server
+echo "Start HTTP server"
 if which nginx; then
     cp config/netboot.conf /etc/nginx/conf.d
     systemctl restart nginx
 else
     start_simple_http_server
 fi
+
+echo "Link ssh private key"
+ln -sf $(readlink -f config/devstack) $TEMP_PATH
 
 start_simple_http_server() {
     cd $HOME_PATH
@@ -29,13 +29,6 @@ start_simple_http_server() {
     echo
 }
 
-echo
-
 cat >&1 <<EOF
-Now config and http server are deployed, you can run "./boot.sh <name>" to init vm or
-something else.
-
-Example:
-source devstack.env
-
+HTTP server is deployed, you can run "./boot.sh <name>" to init vm or run ansible plays.
 EOF

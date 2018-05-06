@@ -1,0 +1,65 @@
+- hosts: all
+  remote_user: root
+  tasks:
+    - name: Install epel-release
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - epel-release
+
+    - name: Install centos-release-openstack-queens
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - centos-release-openstack-queens
+
+    - name: yum upgrade
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Set the fact
+      ini_file:
+        dest: "/etc/ansible/facts.d/openstack.fact"
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+      with_items:
+        - section: common
+          option: yum
+          value: 0
+        - section: keystone
+          option: yum
+          value: 2
+        - section: glance
+          option: yum
+          value: 2
+        - section: nova
+          option: yum
+          value: 2
+        - section: neutron
+          option: yum
+          value: 2
+
+    - name: Install dependencies
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - python-pip
+        - python-openstackclient
+
+      # https://docs.openstack.org/install-guide/environment-networking.html
+    - name: Disable any automated network management tools
+      service:
+        name: NetworkManager
+        state: stopped
+        enabled: no
+
+    - name: Restart server
+      command: /sbin/shutdown -r +1
+      async: 0
+      poll: 0
+      ignore_errors: true

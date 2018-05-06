@@ -1,0 +1,49 @@
+- name: Install Neutron on controller node
+  hosts: controller
+  user: root
+  tasks:
+    - name: Check neutron user exists
+      shell: source /root/adminrc && openstack user show -f json neutron
+      register: check_neutron_user
+      failed_when: check_neutron_user.rc > 1
+
+    - name: Run neutron init DB scripts
+      script: scripts/neutron-init.sh
+      when: check_neutron_user.rc != 0
+
+    - name: Set the Neutron local facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/openstack.fact"
+        section: neutron
+        option: "neutron_user"
+        value: true
+      when: check_neutron_user.rc == 0
+
+    - name: Replace Neutron config
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - src: neutron/neutron.conf.j2
+          dest: /etc/neutron/neutron.conf
+        - src: neutron/ml2_conf.ini.j2
+          dest: /etc/neutron/plugins/ml2/ml2_conf.ini
+
+    - name: Link /etc/neutron/plugin.ini
+      file:
+        src: /etc/neutron/plugins/ml2/ml2_conf.ini
+        dest: /etc/neutron/plugin.ini
+        state: link
+
+    - name: Check current state of Keystone DB
+      command: "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head"
+      become: yes
+      become_user: neutron
+      run_once: yes
+
+    - name: Restart Nova and Neutron service
+      service: name="{{ item }}" state=restarted enabled=yes
+      with_items:
+        - openstack-nova-api
+        - neutron-server
+        - neutron-openvswitch-agent

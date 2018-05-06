@@ -4,65 +4,60 @@
   tasks:
     - name: Run nova init DB scripts
       script: scripts/nova-init-db.sh
-      register: db_created
+      register: nova_init_db
+      when:
+        - not ansible_local['openstack']['nova'].get('db')
 
     - name: Set the Nova local facts
       ini_file:
         dest: "/etc/ansible/facts.d/openstack.fact"
         section: nova
-        option: "db_created"
-        value: "yes"
-      when: db_created.rc == 0
-
-    - name: Check nova user
-      shell: "source /root/adminrc && openstack user show nova"
-      register: nova_user_check
+        option: db
+        value: 1
 
     - name: Run nova init scripts
       script: scripts/nova-init.sh
-      when: nova_user_check.rc != 0
+      register: nova_init
+      when:
+        - not ansible_local['openstack']['nova'].get('user')
 
-    - name: Install nova packages
-      yum:
-        name: "{{ nova_packages }}"
-        state: "present"
+    - name: Set the Nova local facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/openstack.fact"
+        section: nova
+        option: user
+        value: 1
 
     - name: Replace Nova config file
       template:
-        src: nova.conf.j2
+        src: nova/nova.conf.j2
         dest: /etc/nova/nova.conf
 
     - name: Restart HTTP server
       service: name=httpd state=restarted enabled=yes
 
-    - name: Check Nova cells
-      command: "nova-manage cell_v2 list_cells"
-      register: check_cell_result
-
     - name: Perform a Nova DB sync
       command: "{{ item }}"
-      become: yes
-      become_user: nova
       with_items:
         - nova-manage api_db sync
         - nova-manage cell_v2 map_cell0
         - nova-manage cell_v2 create_cell --name=cell1 --verbose
         - nova-manage db sync
-      when: not check_cell_result.stdout.find('cell1')
+      when:
+        - not ansible_local['openstack']['nova'].get('db_sync', 0)
+
+    - name: Set the Nova local facts
+      ini_file:
+        dest: "/etc/ansible/facts.d/openstack.fact"
+        section: nova
+        option: "db_sync"
+        value: "yes"
 
     - name: Start Nova service
       service: name="{{ item }}" state=restarted enabled=yes
       with_items:
         - openstack-nova-api
-        - openstack-nova-consoleauth
+        - openstack-nova-console
         - openstack-nova-scheduler
         - openstack-nova-conductor
         - openstack-nova-novncproxy
-  vars:
-    nova_packages:
-      - openstack-nova-api
-      - openstack-nova-conductor
-      - openstack-nova-console
-      - openstack-nova-novncproxy
-      - openstack-nova-scheduler
-      - openstack-nova-placement-api

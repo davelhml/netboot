@@ -1,0 +1,56 @@
+---
+- name: Configure Neutron on Compute nodes
+  hosts: network
+  user: root
+  tasks:
+    - name: Install Nova compute packages
+      yum:
+        name: "{{ item }}"
+        state: "present"
+      with_items:
+        - openstack-neutron
+        - openstack-neutron-ml2
+        - openstack-neutron-openvswitch
+
+    - name: Replace neutron config file
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - src: neutron/neutron.conf.j2
+          dest: /etc/neutron/neutron.conf
+        - src: neutron/l3_agent.ini.j2
+          dest: /etc/neutron/l3_agent.ini
+        - src: neutron/plugins/ml2/openvswitch_agent.ini.j2
+          dest: /etc/neutron/plugins/ml2/openvswitch_agent.ini
+
+    - name: Replace config
+      script: ../common/replace_ip.sh /etc/neutron/plugins/ml2/openvswitch_agent.ini
+
+    - name: Restart ovsdb
+      service: name=ovsdb-server state=restarted enabled=yes
+    - name: Restart openvswitch
+      service: name=openvswitch state=restarted enabled=yes
+
+    - name: Check OVS daemons
+      command: /usr/share/openvswitch/scripts/ovs-ctl status
+      register: ovs_check
+      ignore_errors: yes
+
+    - name: Check provider bridge
+      command: ovs-vsctl br-exists br-provider
+      register: br_exists
+      ignore_errors: yes
+      failed_when: br_exists.rc not in [0, 2]
+
+    - name: Add bridge and add-port to bridge
+      command: "{{ item }}"
+      with_items:
+        - ovs-vsctl add-br br-provider
+      when: br_exists.rc == 2
+
+    - name: Enable and restart Neutron service
+      service: name="{{ item }}" state=restarted enabled=yes
+      with_items:
+        - neutron-openvswitch-agent
+        - neutron-l3-agent

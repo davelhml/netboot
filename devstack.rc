@@ -1,5 +1,10 @@
-export HOME_PATH=/netboot
+HOME_PATH=$(readlink -f .)
+
+export HOME_PATH
+export CONFIG_PATH=$HOME_PATH/config
+export ANSIBLE_CONFIG=$CONFIG_PATH/ansible/ansible.cfg
 export TEMP_PATH=/netboot/tmp
-export CONFIG_PATH=/netboot/config
-export ANSIBLE_CONFIG=/netboot/config/ansible/ansible.cfg
+export OS_PATH=/netboot/centos7
 export OS_IMG=$TEMP_PATH/CentOS-7-x86_64-Everything-1708.iso
+
+alias to="ssh -i ${CONFIG_PATH}/devstack -F ${CONFIG_PATH}/sshconfig"

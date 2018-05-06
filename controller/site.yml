@@ -1,6 +1,6 @@
 ---
-- import_playbook: packages.yml
 - import_playbook: service.yml
 - import_playbook: keystone.yml
 - import_playbook: glance.yml
 - import_playbook: nova.yml
+- import_playbook: neutron.yml

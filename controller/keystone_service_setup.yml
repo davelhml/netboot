@@ -27,18 +27,18 @@
   until: add_service|success
   retries: 3
   delay: 5
-  when: "not (ansible_local['openstack_ansible']['keystone'].get('local_service_up', False)|bool)"
+  when: "not (ansible_local['openstack']['keystone'].get('local_service_up', False)|bool)"
 
 - name: Set keystone local facts
   ini_file:
-    dest: "/etc/ansible/facts.d/openstack_ansible.fact"
+    dest: "/etc/ansible/facts.d/openstack.fact"
     section: keystone
     option: "{{ item.name }}"
     value: "{{ item.state }}"
   with_items:
     - name: "local_service_up"
       state: "{{ (add_service.rc | int == 0) | bool }}"
-  when: "not (ansible_local['openstack_ansible']['keystone'].get('local_service_up', None))"
+  when: "not (ansible_local['openstack']['keystone'].get('local_service_up', None))"
 
 - name: Create a domain, projects, users and roles
   script: scripts/keystone-init.sh

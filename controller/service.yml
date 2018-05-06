@@ -12,7 +12,18 @@
         name: "{{ item }}"
         state: "present"
       with_items:
+        - nginx
         - httpd
         - mod_wsgi
         - openstack-keystone
         - openstack-glance
+        - openstack-nova-api
+        - openstack-nova-console
+        - openstack-nova-scheduler
+        - openstack-nova-conductor
+        - openstack-nova-novncproxy
+        - openstack-nova-placement-api
+        - openstack-neutron
+        - openstack-neutron-ml2
+        - openstack-neutron-openvswitch
+        - openstack-dashboard

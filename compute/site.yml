@@ -1,0 +1,3 @@
+---
+- import_playbook: nova.yml
+- import_playbook: neutron.yml

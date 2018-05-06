@@ -1,0 +1,17 @@
+- name: Install Dashboard on controller node
+  hosts: controller
+  user: root
+  tasks:
+    - name: Replace Dashboard config
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - src: dashboard/local_settings.j2
+          dest: /etc/openstack-dashboard/local_settings
+
+    - name: Restart HTTP server
+      service: name="{{ item }}" state=restarted enabled=yes
+      with_items:
+        - httpd
+        - memcached
