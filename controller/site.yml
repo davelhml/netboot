@@ -5,3 +5,4 @@
 - import_playbook: nova.yml
 - import_playbook: neutron.yml
 - import_playbook: dashboard.yml
+- import_playbook: init_networks.yml

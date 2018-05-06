@@ -3,7 +3,7 @@
   hosts: network
   user: root
   tasks:
-    - name: Install Nova compute packages
+    - name: Install neutron packages
       yum:
         name: "{{ item }}"
         state: "present"

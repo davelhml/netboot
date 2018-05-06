@@ -3,8 +3,8 @@
 source scripts/common.sh
 TEMPDIR=$(mktemp -d /tmp/netboot-XXXX)
 CONFIGDIR=config
-
-if ! options=$(getopt -u -o c -l cfgdir:, -- "$@")
+DELETEOLD=0
+if ! options=$(getopt -u -o cd -l cfgdir:, -- "$@")
 then
     exit 1
 fi
@@ -13,11 +13,13 @@ while [ $# -gt 0 ]; do
     case $1 in
         -c|--cfgdir)
             CONFIGDIR=$2
-            shift 2
-            ;;
+            shift;;
+        -d)
+            DELETEOLD=1;;
         (--) shift; break;;
-        (*) exit;;
+        (*)  exit;;
     esac
+    shift
 done
 
 [ -z "$1" ] && echo "Please specify image type" && exit 1
@@ -94,10 +96,14 @@ echo "VM network options: ${network_opts}"
 
 virsh dominfo ${image_name} 2>/dev/null
 if [ $? -eq 0 ]; then
-    echo "VM already exits, delete it or revert snapshot for re-deploy"
-    echo "  ./delete.sh $image_name"
-    echo "  ./boot-ex.sh $name $image_name [vlan]"
-    exit 0
+    if [ $DELETEOLD -ne 0 ]; then
+        ./delete.sh $image_name
+    else
+        echo "VM already exits, delete it or revert snapshot for re-deploy"
+        echo "  ./delete.sh $image_name"
+        echo "  ./boot-ex.sh $name $image_name [vlan]"
+        exit 0
+    fi
 fi
 
 set -ex

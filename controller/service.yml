@@ -2,17 +2,17 @@
 - hosts: controller
   remote_user: root
   roles:
-    - etcd
     - mariadb
     - rabbitmq
     - memcached
+    - etcd
+
   tasks:
     - name: Install Controller packages
       yum:
         name: "{{ item }}"
         state: "present"
       with_items:
-        - nginx
         - httpd
         - mod_wsgi
         - openstack-keystone
