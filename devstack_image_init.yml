@@ -1,0 +1,37 @@
+---
+- name: Check cirros
+  shell: source /root/adminrc && openstack image show cirros
+  register: check_cirros
+  failed_when: check_cirros.rc > 1
+
+- name: Copy cirros image if not exists
+  copy: src=/opt/cirros-0.4.0-x86_64-disk.img dest=/tmp/cirros-0.4.0-x86_64-disk.img force=no
+  when: check_cirros.rc == 1 and check_cirros.stdout.find('Could not find')
+
+- name: Create cirros image
+  script: scripts/create-image.sh cirros /tmp/cirros-0.4.0-x86_64-disk.img
+  when: check_cirros.rc == 1 and check_cirros.stdout.find('Could not find')
+
+- name: Check centos
+  shell: source /root/adminrc && openstack image show cirros-7.4
+  register: check_centos
+  failed_when: check_centos.rc > 1
+
+- name: Copy centos image if not exists
+  copy:
+    src: /opt/CentOS-7-x86_64-GenericCloud-1708.qcow2
+    dest: /tmp/CentOS-7-x86_64-GenericCloud-1708.qcow2
+    force: no
+  when: check_centos.rc == 1 and check_centos.stdout.find('Could not find')
+
+- name: Create centos image
+  script: scripts/create-image.sh centos-7.4 /tmp/CentOS-7-x86_64-GenericCloud-1708.qcow2
+  when: check_centos.rc == 1 and check_centos.stdout.find('Could not find')
+
+- name: openstack image list
+  shell: source /root/adminrc && openstack image list
+  register: image_list
+
+- debug:
+    var: image_list.stdout_lines
+    verbosity: 0

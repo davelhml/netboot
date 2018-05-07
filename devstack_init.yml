@@ -1,0 +1,18 @@
+- name: Init devstack env, such as networks, images, flavors, etc.
+  hosts: controller
+  user: root
+  tasks:
+    - include_tasks: devstack_network_init.yml
+    - include_tasks: devstack_image_init.yml
+
+    - name: Copy private key
+      copy: src=config/devstack dest=/tmp/devstack mode=0400 force=no
+      register: result
+
+    - name: Create keypair
+      script: scripts/create-pubkey.sh devstack /tmp/devstack
+      when: result.changed
+
+    - name: Create flavors
+      script: scripts/create-flavors.sh
+      ignore_errors: true

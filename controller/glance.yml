@@ -16,7 +16,6 @@
         - "localhost"
         - "%"
   tasks:
-
     - name: Check glance user exists
       shell: source /root/adminrc && openstack user show -f json glance
       register: check_glance_user
@@ -24,7 +23,7 @@
 
     - name: Run init scripts
       script: scripts/glance-init.sh
-      when: check_glance_user.rc == 0
+      when: check_glance_user.rc == 1
 
     - name: Config glance
       template:

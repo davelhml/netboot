@@ -24,10 +24,6 @@
       with_items:
         - src: templates/keystone.conf.j2
           dest: /etc/keystone/keystone.conf
-        - src: ../common/adminrc.j2
-          dest: /root/adminrc
-        - src: ../common/demorc.j2
-          dest: /root/demorc
         - src: httpd/httpd.conf.j2
           dest: /etc/httpd/conf/httpd.conf
 

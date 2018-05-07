@@ -1,0 +1,17 @@
+---
+- name: Check router
+  shell: source /root/adminrc && openstack router show router1 -f value -c id
+  register: check_router
+  failed_when: check_router.rc > 1
+
+- name: Create network, subnet, security group rule and router
+  script: scripts/create-networks.sh
+  when: check_router.rc == 1 and check_router.stdout.find('No Router found')
+
+- name: openstack network list
+  shell: source /root/adminrc && openstack network list
+  register: network_list
+
+- debug:
+    var: network_list.stdout_lines
+    verbosity: 0
