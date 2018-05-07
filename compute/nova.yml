@@ -19,11 +19,17 @@
         - src: nova/nova.conf.j2
           dest: /etc/nova/nova.conf
 
-    - name: Replace config
-      script: ../common/replace_ip.sh /etc/nova/nova.conf
+    #- name: Replace config
+    #  script: ../common/replace_ip.sh /etc/nova/nova.conf
 
     - name: Enable and restart openstack-nova-compute service
       service: name=openstack-nova-compute state=restarted enabled=yes
+
+  vars:
+    management_ip: "{{ ansible_host }}"
+    vncproxy_public_ip: 10.95.30.13
+    vncproxy_management_ip: 192.168.100.10
+
 
 - name: Add the compute node to the cell database(on controller)
   hosts: controller

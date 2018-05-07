@@ -33,10 +33,10 @@
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
       with_items:
-        src: nova/nova.conf.j2
-        dest: /etc/nova/nova.conf
-        src: httpd/conf.d/00-nova-placement-api.conf.j2
-        dest: /etc/httpd/conf.d/00-nova-placement-api.conf
+        - src: nova/nova.conf.j2
+          dest: /etc/nova/nova.conf
+        - src: httpd/conf.d/00-nova-placement-api.conf.j2
+          dest: /etc/httpd/conf.d/00-nova-placement-api.conf
       register: result
 
     - name: Restart HTTP server
@@ -65,6 +65,9 @@
       with_items:
         - openstack-nova-api
         - openstack-nova-console
+        - openstack-nova-consoleauth
         - openstack-nova-scheduler
         - openstack-nova-conductor
         - openstack-nova-novncproxy
+  vars:
+    management_ip: "{{ ansible_host }}"
