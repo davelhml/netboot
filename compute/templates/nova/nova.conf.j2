@@ -1,13 +1,12 @@
 [DEFAULT]
-enabled_apis = osapi_compute,metadata
+enabled_apis=osapi_compute,metadata
 transport_url = rabbit://openstack:cc@controller
-my_ip=MANAGEMENT_INTERFACE_IP
+my_ip = MANAGEMENT_INTERFACE_IP
 use_neutron = True
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
 [api]
 auth_strategy = keystone
 [api_database]
-connection = mysql+pymysql://nova:cc@controller/nova_api
 [barbican]
 [cache]
 [cells]
@@ -19,7 +18,6 @@ connection = mysql+pymysql://nova:cc@controller/nova_api
 [cors]
 [crypto]
 [database]
-connection = mysql+pymysql://nova:cc@controller/nova
 [ephemeral_storage_encryption]
 [filter_scheduler]
 [glance]
@@ -41,6 +39,7 @@ project_name = service
 username = nova
 password = cc
 [libvirt]
+virt_type = qemu
 [matchmaker_redis]
 [metrics]
 [mks]
@@ -75,11 +74,12 @@ user_domain_name = Default
 auth_url = http://controller:35357/v3
 username = placement
 password = cc
+service_metadata_proxy = true
+metadata_proxy_shared_secret = cc
 [quota]
 [rdp]
 [remote_debug]
 [scheduler]
-discover_hosts_in_cells_interval=300
 [serial_console]
 [service_user]
 [spice]
@@ -88,9 +88,10 @@ discover_hosts_in_cells_interval=300
 [vendordata_dynamic_auth]
 [vmware]
 [vnc]
-enabled = true
-vncserver_listen = $my_ip
+enabled = True
+vncserver_listen = 0.0.0.0
 vncserver_proxyclient_address = $my_ip
+novncproxy_base_url = http://controller:6080/vnc_auto.html
 [workarounds]
 [wsgi]
 [xenserver]

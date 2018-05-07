@@ -13,7 +13,7 @@
   when: check_cirros.rc == 1 and check_cirros.stdout.find('Could not find')
 
 - name: Check centos
-  shell: source /root/adminrc && openstack image show cirros-7.4
+  shell: source /root/adminrc && openstack image show centos-7.4
   register: check_centos
   failed_when: check_centos.rc > 1
 

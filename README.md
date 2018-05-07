@@ -1,7 +1,7 @@
 Deploy OpenStack with kickstart and ansible
 ===========================================
 
-本文根据OpenStack[官方指南][1]，使用[ansible](https://www.ansible.com/)自动化安装部署Openstack环境。所有Openstack的节点均在虚拟机上部署，在物理机上应存在以下网络（接口）：
+本文根据OpenStack[官方指南](1)，使用[ansible](https://www.ansible.com/)自动化安装部署Openstack环境。所有Openstack的节点均在虚拟机上部署，在物理机上应存在以下网络（接口）：
 
 1. virbr10用于management network，如果所有Openstack节点都在同一台物理机上，可通过脚本通过[create-virbr10.sh](scripts/create-virbr10.sh)创建物理机上的dummy接口和网桥
 
@@ -84,6 +84,13 @@ Prepare environment
     # 进到netboot根目录，执行devstack.rc文件
     source devstack.rc
     ansible-playbook devstack_init.yml
+
+
+创建虚拟机
+----------
+
+可以在dashboard创建
+
 
 REFERENCE
 =========

@@ -12,5 +12,7 @@ fi
 ssh-keygen -y -f $path > /tmp/$name.pub
 [ $? -ne 0 ] && exit 1
 
+chmod 400 /tmp/$name.pub
+
 source /root/demorc
 openstack keypair create $name --public-key /tmp/$name.pub
