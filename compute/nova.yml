@@ -19,9 +19,6 @@
         - src: nova/nova.conf.j2
           dest: /etc/nova/nova.conf
 
-    #- name: Replace config
-    #  script: ../common/replace_ip.sh /etc/nova/nova.conf
-
     - name: Enable and restart openstack-nova-compute service
       service: name=openstack-nova-compute state=restarted enabled=yes
 

@@ -25,5 +25,4 @@
         - openstack-nova-placement-api
         - openstack-neutron
         - openstack-neutron-ml2
-        - openstack-neutron-openvswitch
         - openstack-dashboard

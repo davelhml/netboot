@@ -46,4 +46,3 @@
       with_items:
         - openstack-nova-api
         - neutron-server
-        - neutron-openvswitch-agent

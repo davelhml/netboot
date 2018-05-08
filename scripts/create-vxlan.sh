@@ -3,7 +3,7 @@
 hostid=${1:-1}   # host id, e.g. 1, 2
 ifname=${2:-eth1}
 vxlan_mac=54:88:C0:A8:6F:$hostid
-vxlan_ip=192.168.111.$hostid/8
+vxlan_ip=192.168.111.$hostid/24
 
 show() {
     ip -d addr show vxlan0
