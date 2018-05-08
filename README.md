@@ -88,8 +88,13 @@ Prepare environment
 创建虚拟机
 ----------
 
-可以在dashboard创建
+* 可以在dashboard创建(略)
+* 将创建VM脚本拷到controller, 创建名为c1的VM:
 
+```
+scp -i config/devstack scripts/create-vm.sh root@controller:/tmp/
+ssh -i config/devstack root@controller /tmp/create-vm.sh c1
+```
 
 REFERENCE
 =========
