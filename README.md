@@ -52,19 +52,18 @@ Prepare environment
 ```
 # source adminrc
 # openstack network agent list
-+--------------------------------------+--------------------+------------+-------------------+-------+-------+---------------------------+
-| ID                                   | Agent Type         | Host       | Availability Zone | Alive | State | Binary                    |
-+--------------------------------------+--------------------+------------+-------------------+-------+-------+---------------------------+
-| 1d87ee7d-128e-4450-9a24-d308833663c3 | Open vSwitch agent | network    | None              | :-)   | UP    | neutron-openvswitch-agent |
-| 41d63c9b-b409-45ce-930f-dc3c6520aae1 | L3 agent           | network    | nova              | :-)   | UP    | neutron-l3-agent          |
-| 44664ec2-336b-4f59-a2a5-eadbda906b5f | Open vSwitch agent | compute0   | None              | :-)   | UP    | neutron-openvswitch-agent |
-| 44bd9e7d-8e63-45a6-bea2-b47a32e7762d | Open vSwitch agent | controller | None              | :-)   | UP    | neutron-openvswitch-agent |
-| 48f4cec5-3225-4a8b-9ece-100ae963dc4f | Open vSwitch agent | compute1   | None              | :-)   | UP    | neutron-openvswitch-agent |
-| 6df4f349-cfac-4845-854b-a9d35dfa181b | Metadata agent     | compute1   | None              | :-)   | UP    | neutron-metadata-agent    |
-| 7b2308c4-a672-49cd-8f02-8d4987d0c6d3 | DHCP agent         | compute0   | nova              | :-)   | UP    | neutron-dhcp-agent        |
-| bba1604e-997a-49a8-b8b4-6cf897626282 | Metadata agent     | compute0   | None              | :-)   | UP    | neutron-metadata-agent    |
-| d9e814de-7b67-4ef7-bed0-7637c2cfe898 | DHCP agent         | compute1   | nova              | :-)   | UP    | neutron-dhcp-agent        |
-+--------------------------------------+--------------------+------------+-------------------+-------+-------+---------------------------+
++--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
+| ID                                   | Agent Type         | Host     | Availability Zone | Alive | State | Binary                    |
++--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
+| 30b4f064-cc2b-4438-a084-6106e17327c2 | Metadata agent     | compute0 | None              | :-)   | UP    | neutron-metadata-agent    |
+| 4cea125c-4299-4b51-b0cc-792b3d98ffd0 | DHCP agent         | compute1 | nova              | :-)   | UP    | neutron-dhcp-agent        |
+| 5c59b9b5-7eee-4b84-a161-732636289a44 | Open vSwitch agent | compute0 | None              | :-)   | UP    | neutron-openvswitch-agent |
+| 80117680-9a7b-496b-ba60-051086097fc6 | Metadata agent     | compute1 | None              | :-)   | UP    | neutron-metadata-agent    |
+| 8a88c390-2909-47cc-a8d9-b18dcd09cf60 | L3 agent           | network  | nova              | :-)   | UP    | neutron-l3-agent          |
+| c0feb8ee-a002-4064-96fa-a3e118269675 | Open vSwitch agent | network  | None              | :-)   | UP    | neutron-openvswitch-agent |
+| daa482ff-8756-4cff-a918-a46558ccfcc9 | Open vSwitch agent | compute1 | None              | :-)   | UP    | neutron-openvswitch-agent |
+| fe425712-dc93-4e2d-9cb7-068c832e025e | DHCP agent         | compute0 | nova              | :-)   | UP    | neutron-dhcp-agent        |
++--------------------------------------+--------------------+----------+-------------------+-------+-------+---------------------------+
 ```
 
 (2) 访问Dashboard
