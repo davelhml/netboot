@@ -47,6 +47,7 @@
       command: "{{ item }}"
       with_items:
         - ovs-vsctl add-br br-provider
+        - ovs-vsctl add-port br-provider eth1
       when: br_exists.rc == 2
 
     - name: Enable and restart Neutron service

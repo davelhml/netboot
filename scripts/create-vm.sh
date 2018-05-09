@@ -25,5 +25,10 @@ do
 done
 echo
 echo
-#openstack floating ip create provider1
-#openstack server add floating ip selfservice-instance1 ${flouting_ip}
+
+cat >&1 <<EOF
+openstack floating ip create provider1
+flouting_ip=1.1.1.1
+openstack server add floating ip ${name} ${flouting_ip}
+openstack server remove floating ip ${name} ${flouting_ip}
+EOF
