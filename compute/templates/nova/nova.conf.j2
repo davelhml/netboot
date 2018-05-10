@@ -2,8 +2,6 @@
 enabled_apis=osapi_compute,metadata
 transport_url = rabbit://openstack:cc@controller
 my_ip = {{ management_ip }}
-use_neutron = True
-firewall_driver = nova.virt.firewall.NoopFirewallDriver
 [api]
 auth_strategy = keystone
 [api_database]
@@ -29,7 +27,6 @@ api_servers = http://controller:9292
 [key_manager]
 [keystone]
 [keystone_authtoken]
-auth_uri = http://controller:5000
 auth_url = http://controller:35357
 memcached_servers = controller:11211
 auth_type = password
@@ -44,7 +41,6 @@ virt_type = qemu
 [metrics]
 [mks]
 [neutron]
-url = http://controller:9696
 auth_url = http://controller:35357
 auth_type = password
 project_domain_name = default
@@ -66,7 +62,7 @@ lock_path = /var/lib/nova/tmp
 [oslo_policy]
 [pci]
 [placement]
-os_region_name = RegionOne
+region_name = RegionOne
 project_domain_name = Default
 project_name = service
 auth_type = password
