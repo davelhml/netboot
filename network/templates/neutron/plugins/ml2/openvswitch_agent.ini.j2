@@ -1,10 +1,11 @@
 [DEFAULT]
+debug = true
 [agent]
 tunnel_types = vxlan
 l2_population = true
 [ovs]
 bridge_mappings = provider:br-provider
-local_ip = OVERLAY_INTERFACE_IP
+local_ip = "{{ ansible_eth2['ipv4']['address'] }}"
 [securitygroup]
 firewall_driver = iptables_hybrid
 [xenapi]
