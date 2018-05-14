@@ -9,7 +9,7 @@ Deploy OpenStack with kickstart and ansible
 
 2. br0，用于provider network
 
-3. br-vxlan用于overlay network，可通过脚本通过[create-virbr.sh](scripts/create-virbr.sh)创建物理机上的dummy接口和网桥
+3. virbr111用于overlay network，可通过脚本通过[create-virbr.sh](scripts/create-virbr.sh)创建物理机上的dummy接口和网桥
 
         scripts/create-virbr.sh 111
 
@@ -25,7 +25,7 @@ virbr111           8000.525400e0075f  yes             virbr111-dummy
 
 以上三种网络分别对应Openstack虚拟机节点的网络接口eth0, eth1, eth2
 
-!(self-service-network)[inventories/demo/self-service-networks.png]
+![self-service-network](inventories/demo/self-service-networks.png)
 
 Prepare environment
 ===================
