@@ -5,7 +5,7 @@ tunnel_types = vxlan
 l2_population = true
 [ovs]
 bridge_mappings = provider:br-provider
-local_ip = "{{ ansible_eth2['ipv4']['address'] }}"
+local_ip = {{ ansible_eth2['ipv4']['address'] }}
 [securitygroup]
 firewall_driver = iptables_hybrid
 [xenapi]

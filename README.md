@@ -1,7 +1,7 @@
 Deploy OpenStack with kickstart and ansible
 ===========================================
 
-本文根据OpenStack[官方指南](https://docs.openstack.org/install-guide)，使用[ansible](https://www.ansible.com/)自动化安装部署Openstack环境。本例为demo环境部署3个网络，管理网络, provider网络和overlay网络，所有Openstack的节点均在虚拟机上部署，在物理机上应存在以下网络（接口）：
+本文根据OpenStack[官方指南](https://docs.openstack.org/install-guide)，使用[ansible](https://www.ansible.com/)自动化安装部署Openstack环境。本文采用[ovs-selfservice](https://docs.openstack.org/neutron/latest/admin/deploy-ovs-selfservice.html)网络架构，要求demo环境存在3个网络，管理网络, provider网络和overlay网络，所有Openstack的节点均在虚拟机上部署，在物理机上应存在以下网络（接口）：
 
 1. virbr100用于management network，如果所有Openstack节点都在同一台物理机上，可通过脚本通过[create-virbr.sh](scripts/create-virbr.sh)创建物理机上的dummy接口和网桥
 
@@ -24,6 +24,8 @@ virbr111           8000.525400e0075f  yes             virbr111-dummy
 ```
 
 以上三种网络分别对应Openstack虚拟机节点的网络接口eth0, eth1, eth2
+
+!(self-service-network)[inventories/demo/self-service-networks.png]
 
 Prepare environment
 ===================
