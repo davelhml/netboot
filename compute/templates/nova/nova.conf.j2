@@ -1,7 +1,7 @@
 [DEFAULT]
 enabled_apis=osapi_compute,metadata
 transport_url = rabbit://openstack:cc@controller
-my_ip = {{ management_ip }}
+my_ip = {{ ansible_eth0['ipv4']['address'] }}
 [api]
 auth_strategy = keystone
 [api_database]

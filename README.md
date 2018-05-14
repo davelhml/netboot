@@ -1,15 +1,29 @@
 Deploy OpenStack with kickstart and ansible
 ===========================================
 
-本文根据OpenStack[官方指南](1)，使用[ansible](https://www.ansible.com/)自动化安装部署Openstack环境。所有Openstack的节点均在虚拟机上部署，在物理机上应存在以下网络（接口）：
+本文根据OpenStack[官方指南](https://docs.openstack.org/install-guide)，使用[ansible](https://www.ansible.com/)自动化安装部署Openstack环境。本例为demo环境部署3个网络，管理网络, provider网络和overlay网络，所有Openstack的节点均在虚拟机上部署，在物理机上应存在以下网络（接口）：
 
-1. virbr10用于management network，如果所有Openstack节点都在同一台物理机上，可通过脚本通过[create-virbr10.sh](scripts/create-virbr10.sh)创建物理机上的dummy接口和网桥
+1. virbr100用于management network，如果所有Openstack节点都在同一台物理机上，可通过脚本通过[create-virbr.sh](scripts/create-virbr.sh)创建物理机上的dummy接口和网桥
+
+        scripts/create-virbr.sh 100
 
 2. br0，用于provider network
 
-3. br-vxlan用于overlay network，可通过[create-vxlan.sh](scripts/create-vxlan.sh)创建物理机上的vxlan接口和网桥
+3. br-vxlan用于overlay network，可通过脚本通过[create-virbr.sh](scripts/create-virbr.sh)创建物理机上的dummy接口和网桥
 
-以上三种网络分别对应Openstack虚拟机节点eth0, eth1, eth2
+        scripts/create-virbr.sh 111
+
+在物理机上的桥如下：
+
+
+```
+bridge name        bridge id          STP enabled     interfaces
+br0                8000.6c92bf2fa311  no              eth0
+virbr100           8000.5254002377e5  yes             virbr100-dummy
+virbr111           8000.525400e0075f  yes             virbr111-dummy
+```
+
+以上三种网络分别对应Openstack虚拟机节点的网络接口eth0, eth1, eth2
 
 Prepare environment
 ===================
@@ -27,7 +41,7 @@ Prepare environment
     ./boot.sh compute1
     ./boot.sh network
 
-    # 将Openstack RC文档拷入controller
+    # 安装完操作系统后，将Openstack RC文件拷入控制节点，以备后续安装配置Openstack使用
     scp -i config/devstack config/adminrc config/demorc root@controller:~/
 
 
@@ -35,14 +49,13 @@ Prepare environment
 
 所有节点安装公共rpm包，这一步可能会执行很长一段时间，因为要进行yum update
 
-    source devstack.rc
-    ansible-playbook common/packages.yml
+    ansible-playbook -i inventories/demo common/packages.yml
 
-分别进入到controller, compute，network目录，运行ansible play文件`site.yml`自动化部署所有VM，如下
+分别部署controller, compute，network节点，运行ansible play文件`site.yml`自动化部署所有VM，如下
 
-    source devstack.rc #设置环境变量
-    cd controller
-    ansible-playbook site.yml
+    ansible-playbook -i inventories/demo controller/site.yml
+    ansible-playbook -i inventories/demo compute/site.yml
+    ansible-playbook -i inventories/demo network/site.yml
 
 验证安装结果
 ============
@@ -80,10 +93,8 @@ Prepare environment
 
 以上验证如果没问题，说明一个干净的OpenStack安装成功，但此问题没有任何网络，镜像等资源，因此资源的进行初始化
 
-    # 进到netboot根目录，执行devstack.rc文件
-    source devstack.rc
-    ansible-playbook devstack_init.yml
-
+    # 进到netboot根目录，执行以下初始化
+    ansible-playbook -i inventories/demo devstack_init.yml
 
 创建虚拟机
 ----------
@@ -99,4 +110,4 @@ ssh -i config/devstack root@controller /tmp/create-vm.sh c1
 REFERENCE
 =========
 
-[1](https://docs.openstack.org/install-guide)
+[install-guide](https://docs.openstack.org/install-guide)
